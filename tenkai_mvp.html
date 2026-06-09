@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天海の城 MVP管理システム</title>
+<style>
+:root {
+  --navy: #1a2744;
+  --navy-light: #243460;
+  --gold: #c9a84c;
+  --gold-light: #e8c96d;
+  --bg: #f0f2f5;
+  --white: #ffffff;
+  --gray: #6b7280;
+  --gray-light: #e5e7eb;
+  --red: #dc2626;
+  --green: #16a34a;
+  --orange: #ea580c;
+  --blue: #2563eb;
+  --text: #1f2937;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+#header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  color: var(--white);
+  padding: 0;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+#header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+}
+#header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; }
+#header h1 span { color: var(--gold); }
+#header-date { font-size: 0.75rem; opacity: 0.8; }
+#home-btn {
+  background: var(--gold); color: var(--navy); border: none; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
+#home-btn:hover { background: var(--gold-light); }
+
+/* NAV */
+#nav-bar {
+  display: flex; overflow-x: auto; gap: 4px; padding: 6px 12px;
+  background: rgba(255,255,255,0.08);
+  scrollbar-width: none;
+}
+#nav-bar::-webkit-scrollbar { display: none; }
+.nav-chip {
+  white-space: nowrap; padding: 5px 12px; border-radius: 20px;
+  font-size: 0.72rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85); background: transparent; transition: all 0.2s;
+  flex-shrink: 0;
+}
+.nav-chip:hover, .nav-chip.active {
+  background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 700;
+}
+
+/* MAIN */
+#main { padding: 16px; max-width: 900px; margin: 0 auto; }
+
+/* PAGE */
+.page { display: none; }
+.page.active { display: block; }
+
+/* DASHBOARD */
+#dashboard h2 { font-size: 1.2rem; color: var(--navy); margin-bottom: 4px; }
+#dashboard .subtitle { font-size: 0.8rem; color: var(--gray); margin-bottom: 16px; }
+.module-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+@media (max-width: 600px) { .module-grid { grid-template-columns: repeat(2, 1fr); } }
+.module-card {
+  background: var(--white); border-radius: var(--radius);
+  padding: 14px 10px; text-align: center; cursor: pointer;
+  box-shadow: var(--shadow); transition: all 0.2s;
+  border-top: 3px solid var(--gold);
+}
+.module-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+.module-card .icon { font-size: 1.8rem; margin-bottom: 6px; }
+.module-card .name { font-size: 0.72rem; font-weight: 700; color: var(--navy); line-height: 1.3; }
+.module-card .badge {
+  display: inline-block; background: var(--red); color: white;
+  font-size: 0.65rem; padding: 1px 6px; border-radius: 10px; margin-top: 4px;
+}
+
+/* PAGE HEADER */
+.page-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  padding-bottom: 12px; border-bottom: 2px solid var(--gold);
+}
+.page-header .ph-icon { font-size: 1.6rem; }
+.page-header h2 { font-size: 1.1rem; color: var(--navy); font-weight: 700; }
+.page-header p { font-size: 0.75rem; color: var(--gray); margin-top: 2px; }
+
+/* CARDS */
+.card {
+  background: var(--white); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.card h3 { font-size: 0.9rem; color: var(--navy); margin-bottom: 12px; font-weight: 700; }
+
+/* FORMS */
+.form-row { margin-bottom: 10px; }
+.form-row label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.form-row input, .form-row select, .form-row textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--gray-light);
+  border-radius: 6px; font-size: 0.85rem; font-family: inherit; color: var(--text);
+}
+.form-row textarea { resize: vertical; min-height: 70px; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+  outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,39,68,0.1);
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+
+/* BUTTONS */
+.btn {
+  padding: 9px 20px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; border: none; transition: all 0.2s;
+}
+.btn-primary { background: var(--navy); color: white; }
+.btn-primary:hover { background: var(--navy-light); }
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-danger { background: var(--red); color: white; font-size: 0.75rem; padding: 4px 10px; }
+.btn-success { background: var(--green); color: white; }
+.btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+
+/* RECORDS TABLE */
+.record-list { margin-top: 16px; }
+.record-list h3 { font-size: 0.85rem; color: var(--gray); margin-bottom: 8px; }
+.record-item {
+  background: var(--white); border-radius: 6px; padding: 10px 12px;
+  margin-bottom: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.record-item .rec-time { font-size: 0.7rem; color: var(--gray); white-space: nowrap; min-width: 80px; }
+.record-item .rec-body { flex: 1; font-size: 0.82rem; }
+.record-item .rec-title { font-weight: 700; color: var(--navy); }
+.record-item .rec-sub { color: var(--gray); font-size: 0.75rem; margin-top: 2px; }
+.record-item .rec-badge {
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; white-space: nowrap;
+}
+.badge-red { background: #fee2e2; color: var(--red); }
+.badge-green { background: #dcfce7; color: var(--green); }
+.badge-orange { background: #ffedd5; color: var(--orange); }
+.badge-blue { background: #dbeafe; color: var(--blue); }
+.badge-gray { background: var(--gray-light); color: var(--gray); }
+
+/* CHECKLIST */
+.checklist-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-bottom: 1px solid var(--gray-light);
+}
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; accent-color: var(--navy); }
+.checklist-item label { font-size: 0.85rem; flex: 1; cursor: pointer; }
+.checklist-item label.checked { text-decoration: line-through; color: var(--gray); }
+.checklist-item .cl-note input { width: 140px; padding: 3px 6px; font-size: 0.75rem; border: 1px solid var(--gray-light); border-radius: 4px; }
+
+/* STATUS BADGE */
+.status-ok { color: var(--green); font-weight: 700; }
+.status-ng { color: var(--red); font-weight: 700; }
+.status-warn { color: var(--orange); font-weight: 700; }
+
+/* TABS */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 12px; }
+.tab-btn {
+  padding: 7px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+  border: 1px solid var(--gray-light); background: white; color: var(--gray);
+}
+.tab-btn.active { background: var(--navy); color: white; border-color: var(--navy); font-weight: 700; }
+
+/* TEMP GAUGE */
+.gauge-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--gray-light);
+}
+.gauge-row:last-child { border-bottom: none; }
+.gauge-label { font-size: 0.8rem; font-weight: 700; min-width: 80px; }
+.gauge-val { font-size: 1.1rem; font-weight: 700; color: var(--navy); min-width: 70px; }
+.gauge-bar { flex: 1; height: 8px; background: var(--gray-light); border-radius: 4px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+/* KEY TABLE */
+.key-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.key-table th { background: var(--navy); color: white; padding: 8px; text-align: left; font-size: 0.78rem; }
+.key-table td { padding: 8px; border-bottom: 1px solid var(--gray-light); }
+.key-table tr:hover td { background: #f8f9fa; }
+
+/* SUMMARY BOX */
+.summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 500px) { .summary-grid { grid-template-columns: repeat(2,1fr); } }
+.summary-box { background: var(--white); border-radius: var(--radius); padding: 12px; text-align: center; box-shadow: var(--shadow); }
+.summary-box .s-num { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+.summary-box .s-label { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 30px; color: var(--gray); font-size: 0.85rem; }
+
+/* PRINT */
+@media print {
+  #header, #nav-bar { position: static; }
+  .btn, #home-btn { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-top">
+    <div>
+      <h1>🏯 <span>天海の城</span> MVP管理システム</h1>
+      <div id="header-date"></div>
+    </div>
+    <button id="home-btn" onclick="showPage('dashboard')">🏠 ホーム</button>
+  </div>
+  <div id="nav-bar">
+    <div class="nav-chip" onclick="showPage('p1')">①運営指示</div>
+    <div class="nav-chip" onclick="showPage('p2')">②開館前点検</div>
+    <div class="nav-chip" onclick="showPage('p3')">③閉館点検</div>
+    <div class="nav-chip" onclick="showPage('p4')">④客室点検</div>
+    <div class="nav-chip" onclick="showPage('p5')">⑤清掃確認</div>
+    <div class="nav-chip" onclick="showPage('p6')">⑥設備異常</div>
+    <div class="nav-chip" onclick="showPage('p7')">⑦修理申請</div>
+    <div class="nav-chip" onclick="showPage('p8')">⑧飲食・厨房</div>
+    <div class="nav-chip" onclick="showPage('p9')">⑨温湿度管理</div>
+    <div class="nav-chip" onclick="showPage('p10')">⑩展示品管理</div>
+    <div class="nav-chip" onclick="showPage('p11')">⑪植物管理</div>
+    <div class="nav-chip" onclick="showPage('p12')">⑫顧客接遇</div>
+    <div class="nav-chip" onclick="showPage('p13')">⑬接遇承認申請</div>
+    <div class="nav-chip" onclick="showPage('p14')">⑭台風点検</div>
+    <div class="nav-chip" onclick="showPage('p15')">⑮事故・苦情</div>
+    <div class="nav-chip" onclick="showPage('p16')">⑯購入精算</div>
+    <div class="nav-chip" onclick="showPage('p17')">⑰鍵管理</div>
+    <div class="nav-chip" onclick="showPage('p18')">⑱日報作成</div>
+  </div>
+</div>
+
+<div id="main">
+
+<!-- ========== DASHBOARD ========== -->
+<div id="dashboard" class="page active">
+  <h2>本日のダッシュボード</h2>
+  <p class="subtitle" id="dash-subtitle"></p>
+  <div class="summary-grid" id="dash-summary"></div>
+  <div class="module-grid">
+    <div class="module-card" onclick="showPage('p1')"><div class="icon">📋</div><div class="name">今日の運営指示</div></div>
+    <div class="module-card" onclick="showPage('p2')"><div class="icon">🌅</div><div class="name">開館前点検</div></div>
+    <div class="module-card" onclick="showPage('p3')"><div class="icon">🌙</div><div class="name">閉館時点検</div></div>
+    <div class="module-card" onclick="showPage('p4')"><div class="icon">🛏️</div><div class="name">客室最終点検</div></div>
+    <div class="module-card" onclick="showPage('p5')"><div class="icon">🧹</div><div class="name">清掃確認</div></div>
+    <div class="module-card" onclick="showPage('p6')"><div class="icon">⚠️</div><div class="name">設備異常報告</div></div>
+    <div class="module-card" onclick="showPage('p7')"><div class="icon">🔧</div><div class="name">修理申請・検収</div></div>
+    <div class="module-card" onclick="showPage('p8')"><div class="icon">🍽️</div><div class="name">飲食・厨房管理</div></div>
+    <div class="module-card" onclick="showPage('p9')"><div class="icon">🌡️</div><div class="name">温湿度管理</div></div>
+    <div class="module-card" onclick="showPage('p10')"><div class="icon">🖼️</div><div class="name">展示品状態管理</div></div>
+    <div class="module-card" onclick="showPage('p11')"><div class="icon">🌿</div><div class="name">植物管理</div></div>
+    <div class="module-card" onclick="showPage('p12')"><div class="icon">🤝</div><div class="name">顧客接遇登録</div></div>
+    <div class="module-card" onclick="showPage('p13')"><div class="icon">🎁</div><div class="name">無料接遇・割引申請</div></div>
+    <div class="module-card" onclick="showPage('p14')"><div class="icon">🌀</div><div class="name">台風防災点検</div></div>
+    <div class="module-card" onclick="showPage('p15')"><div class="icon">🚨</div><div class="name">事故・苦情・異常</div></div>
+    <div class="module-card" onclick="showPage('p16')"><div class="icon">💴</div><div class="name">購入・立替精算</div></div>
+    <div class="module-card" onclick="showPage('p17')"><div class="icon">🗝️</div><div class="name">鍵管理</div></div>
+    <div class="module-card" onclick="showPage('p18')"><div class="icon">📝</div><div class="name">日報作成</div></div>
+  </div>
+</div>
+
+<!-- ========== P1: 今日の運営指示 ========== -->
+<div id="p1" class="page">
+  <div class="page-header">
+    <span class="ph-icon">📋</span>
+    <div><h2>今日の運営指示</h2><p>管理者からのその日の指示・連絡事項</p></div>
+  </div>
+  <div class="card">
+    <h3>新規指示登録</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>タイトル</label><input type="text" id="i1-title" placeholder="指示タイトル"></div>
+      <div class="form-row"><label>優先度</label>
+        <select id="i1-priority">
+          <option value="通常">通常</option>
+          <option value="重要">重要</option>
+          <option value="緊急">緊急</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>内容</label><textarea id="i1-body" placeholder="指示内容を入力してください"></textarea></div>
+    <div class="form-grid">
+      <div class="form-row"><label>担当部署・スタッフ</label><input type="text" id="i1-staff" placeholder="例：フロント全員"></div>
+      <div class="form-row"><label>登録者</label><input type="text" id="i1-author" placeholder="氏名"></div>
+    </div>
+    <button class="btn btn-primary" onclick="save('instructions',['i1-title','i1-priority','i1-body','i1-staff','i1-author'],renderInstructions)">登録する</button>
+  </div>
+  <div class="record-list" id="instructions-list"></div>
+</div>
+
+<!-- ========== P2: 開館前点検 ========== -->
+<div id="p2" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🌅</span>
+    <div><h2>開館前点検</h2><p>開館前の施設チェックリスト</p></div>
+  </div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-row"><label>点検日</label><input type="date" id="p2-date"></div>
+      <div class="form-row"><label>点検者</label><input type="text" id="p2-inspector" placeholder="氏名"></div>
+    </div>
+    <div id="p2-checklist"></div>
+    <div class="form-row" style="margin-top:12px"><label>特記事項</label><textarea id="p2-note" placeholder="気になる点があれば記入"></textarea></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="saveChecklist('pre_open','p2')">点検完了・保存</button>
+  </div>
+  <div class="record-list" id="pre_open-list"></div>
+</div>
+
+<!-- ========== P3: 閉館時点検 ========== -->
+<div id="p3" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🌙</span>
+    <div><h2>閉館時点検</h2><p>閉館時の施設チェックリスト</p></div>
+  </div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-row"><label>点検日</label><input type="date" id="p3-date"></div>
+      <div class="form-row"><label>点検者</label><input type="text" id="p3-inspector" placeholder="氏名"></div>
+    </div>
+    <div id="p3-checklist"></div>
+    <div class="form-row" style="margin-top:12px"><label>特記事項</label><textarea id="p3-note" placeholder="気になる点があれば記入"></textarea></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="saveChecklist('close','p3')">点検完了・保存</button>
+  </div>
+  <div class="record-list" id="close-list"></div>
+</div>
+
+<!-- ========== P4: 客室最終点検 ========== -->
+<div id="p4" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🛏️</span>
+    <div><h2>客室最終点検</h2><p>チェックイン前の客室最終確認</p></div>
+  </div>
+  <div class="card">
+    <h3>点検記録入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>客室番号</label><input type="text" id="p4-room" placeholder="例：201"></div>
+      <div class="form-row"><label>点検者</label><input type="text" id="p4-inspector" placeholder="氏名"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>ベッド・寝具</label><select id="p4-bed"><option>OK</option><option>要対応</option><option>NG</option></select></div>
+      <div class="form-row"><label>バスルーム</label><select id="p4-bath"><option>OK</option><option>要対応</option><option>NG</option></select></div>
+      <div class="form-row"><label>アメニティ</label><select id="p4-amenity"><option>OK</option><option>要対応</option><option>NG</option></select></div>
+      <div class="form-row"><label>空調・電気</label><select id="p4-elec"><option>OK</option><option>要対応</option><option>NG</option></select></div>
+      <div class="form-row"><label>清潔度</label><select id="p4-clean"><option>OK</option><option>要対応</option><option>NG</option></select></div>
+      <div class="form-row"><label>総合判定</label><select id="p4-result"><option value="合格">✅ 合格</option><option value="要対応">⚠️ 要対応</option><option value="不合格">❌ 不合格</option></select></div>
+    </div>
+    <div class="form-row"><label>備考</label><textarea id="p4-note" placeholder="特記事項"></textarea></div>
+    <button class="btn btn-primary" onclick="save('room_inspect',['p4-room','p4-inspector','p4-bed','p4-bath','p4-amenity','p4-elec','p4-clean','p4-result','p4-note'],renderRoomInspect)">保存</button>
+  </div>
+  <div class="record-list" id="room_inspect-list"></div>
+</div>
+
+<!-- ========== P5: 清掃確認 ========== -->
+<div id="p5" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🧹</span>
+    <div><h2>清掃確認</h2><p>客室・共用部の清掃状況トラッキング</p></div>
+  </div>
+  <div class="card">
+    <h3>清掃記録入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>場所・客室番号</label><input type="text" id="p5-loc" placeholder="例：201 / ロビー"></div>
+      <div class="form-row"><label>清掃担当者</label><input type="text" id="p5-staff" placeholder="氏名"></div>
+      <div class="form-row"><label>清掃種別</label><select id="p5-type"><option>通常清掃</option><option>チェックアウト清掃</option><option>深清掃</option><option>共用部清掃</option></select></div>
+      <div class="form-row"><label>状態</label><select id="p5-status"><option value="完了">✅ 完了</option><option value="進行中">🔄 進行中</option><option value="未着手">⏸ 未着手</option></select></div>
+    </div>
+    <div class="form-row"><label>備考</label><input type="text" id="p5-note" placeholder="特記事項"></div>
+    <button class="btn btn-primary" onclick="save('cleaning',['p5-loc','p5-staff','p5-type','p5-status','p5-note'],renderCleaning)">保存</button>
+  </div>
+  <div class="record-list" id="cleaning-list"></div>
+</div>
+
+<!-- ========== P6: 設備異常報告 ========== -->
+<div id="p6" class="page">
+  <div class="page-header">
+    <span class="ph-icon">⚠️</span>
+    <div><h2>設備異常報告</h2><p>施設内設備の不具合・異常を報告</p></div>
+  </div>
+  <div class="card">
+    <h3>異常報告入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>設備名・場所</label><input type="text" id="p6-equip" placeholder="例：エレベーター1号機"></div>
+      <div class="form-row"><label>報告者</label><input type="text" id="p6-reporter" placeholder="氏名"></div>
+      <div class="form-row"><label>緊急度</label><select id="p6-severity"><option value="低">低（様子見）</option><option value="中">中（近日対応）</option><option value="高">高（本日対応）</option><option value="緊急">緊急（即時対応）</option></select></div>
+      <div class="form-row"><label>状態</label><select id="p6-status"><option>未対応</option><option>対応中</option><option>解決済</option></select></div>
+    </div>
+    <div class="form-row"><label>異常内容（詳細）</label><textarea id="p6-detail" placeholder="発見した異常の詳細を記入"></textarea></div>
+    <button class="btn btn-primary" onclick="save('equipment',['p6-equip','p6-reporter','p6-severity','p6-status','p6-detail'],renderEquipment)">報告する</button>
+  </div>
+  <div class="record-list" id="equipment-list"></div>
+</div>
+
+<!-- ========== P7: 修理申請・検収 ========== -->
+<div id="p7" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🔧</span>
+    <div><h2>修理申請・検収</h2><p>修理依頼の申請と完了後の検収確認</p></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('p7','apply')">修理申請</button>
+    <button class="tab-btn" onclick="switchTab('p7','accept')">検収確認</button>
+  </div>
+  <div id="p7-apply">
+    <div class="card">
+      <h3>修理申請</h3>
+      <div class="form-grid">
+        <div class="form-row"><label>対象設備・場所</label><input type="text" id="p7-target" placeholder="例：206号室 エアコン"></div>
+        <div class="form-row"><label>申請者</label><input type="text" id="p7-applicant" placeholder="氏名"></div>
+        <div class="form-row"><label>緊急度</label><select id="p7-urgency"><option>通常</option><option>急ぎ</option><option>緊急</option></select></div>
+        <div class="form-row"><label>希望対応日</label><input type="date" id="p7-wish-date"></div>
+      </div>
+      <div class="form-row"><label>修理内容・症状</label><textarea id="p7-detail" placeholder="不具合の症状を具体的に記入"></textarea></div>
+      <div class="form-row"><label>概算費用（円）</label><input type="number" id="p7-cost" placeholder="不明の場合は空白"></div>
+      <button class="btn btn-primary" onclick="save('repair',['p7-target','p7-applicant','p7-urgency','p7-wish-date','p7-detail','p7-cost'],renderRepair)">申請する</button>
+    </div>
+    <div class="record-list" id="repair-list"></div>
+  </div>
+  <div id="p7-accept" style="display:none">
+    <div class="card">
+      <h3>検収記録</h3>
+      <div class="form-grid">
+        <div class="form-row"><label>修理申請No / 対象</label><input type="text" id="p7a-ref" placeholder="申請番号または設備名"></div>
+        <div class="form-row"><label>業者名</label><input type="text" id="p7a-vendor" placeholder="業者名"></div>
+        <div class="form-row"><label>完了日</label><input type="date" id="p7a-done"></div>
+        <div class="form-row"><label>実費（円）</label><input type="number" id="p7a-actual-cost" placeholder="0"></div>
+        <div class="form-row"><label>検収結果</label><select id="p7a-result"><option value="合格">✅ 合格（完了）</option><option value="再修理">⚠️ 再修理必要</option></select></div>
+        <div class="form-row"><label>検収者</label><input type="text" id="p7a-inspector" placeholder="氏名"></div>
+      </div>
+      <div class="form-row"><label>検収コメント</label><textarea id="p7a-comment" placeholder="作業内容・確認事項"></textarea></div>
+      <button class="btn btn-primary" onclick="save('acceptance',['p7a-ref','p7a-vendor','p7a-done','p7a-actual-cost','p7a-result','p7a-inspector','p7a-comment'],renderAcceptance)">検収記録保存</button>
+    </div>
+    <div class="record-list" id="acceptance-list"></div>
+  </div>
+</div>
+
+<!-- ========== P8: 飲食・厨房管理 ========== -->
+<div id="p8" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🍽️</span>
+    <div><h2>飲食・厨房管理</h2><p>厨房の温度管理・衛生記録・在庫メモ</p></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('p8','temp')">温度記録</button>
+    <button class="tab-btn" onclick="switchTab('p8','hygiene')">衛生チェック</button>
+    <button class="tab-btn" onclick="switchTab('p8','stock')">在庫メモ</button>
+  </div>
+  <div id="p8-temp">
+    <div class="card">
+      <h3>冷蔵・冷凍庫 温度記録</h3>
+      <div class="form-grid">
+        <div class="form-row"><label>機器名</label><input type="text" id="p8-device" placeholder="例：冷蔵庫A"></div>
+        <div class="form-row"><label>温度（℃）</label><input type="number" step="0.1" id="p8-temp-val" placeholder="例：4.5"></div>
+        <div class="form-row"><label>記録者</label><input type="text" id="p8-temp-staff" placeholder="氏名"></div>
+        <div class="form-row"><label>判定</label><select id="p8-temp-judge"><option value="正常">✅ 正常</option><option value="警告">⚠️ 警告</option><option value="異常">🚨 異常</option></select></div>
+      </div>
+      <button class="btn btn-primary" onclick="save('kitchen_temp',['p8-device','p8-temp-val','p8-temp-staff','p8-temp-judge'],renderKitchenTemp)">記録する</button>
+    </div>
+    <div class="record-list" id="kitchen_temp-list"></div>
+  </div>
+  <div id="p8-hygiene" style="display:none">
+    <div class="card">
+      <h3>衛生チェック</h3>
+      <div id="p8-checklist"></div>
+      <div class="form-grid" style="margin-top:10px">
+        <div class="form-row"><label>点検日</label><input type="date" id="p8-hygiene-date"></div>
+        <div class="form-row"><label>担当者</label><input type="text" id="p8-hygiene-staff" placeholder="氏名"></div>
+      </div>
+      <div class="form-row"><label>特記事項</label><textarea id="p8-hygiene-note" placeholder="気になる点があれば"></textarea></div>
+      <button class="btn btn-primary" onclick="saveChecklist('kitchen_hygiene','p8-hygiene')">保存</button>
+    </div>
+    <div class="record-list" id="kitchen_hygiene-list"></div>
+  </div>
+  <div id="p8-stock" style="display:none">
+    <div class="card">
+      <h3>在庫・発注メモ</h3>
+      <div class="form-grid">
+        <div class="form-row"><label>品目</label><input type="text" id="p8-item" placeholder="例：醤油"></div>
+        <div class="form-row"><label>数量</label><input type="text" id="p8-qty" placeholder="例：残り2本"></div>
+        <div class="form-row"><label>区分</label><select id="p8-stock-type"><option>在庫確認</option><option>発注済</option><option>要発注</option><option>受領確認</option></select></div>
+        <div class="form-row"><label>担当者</label><input type="text" id="p8-stock-staff" placeholder="氏名"></div>
+      </div>
+      <div class="form-row"><label>備考</label><input type="text" id="p8-stock-note" placeholder="メーカー・備考など"></div>
+      <button class="btn btn-primary" onclick="save('kitchen_stock',['p8-item','p8-qty','p8-stock-type','p8-stock-staff','p8-stock-note'],renderKitchenStock)">登録</button>
+    </div>
+    <div class="record-list" id="kitchen_stock-list"></div>
+  </div>
+</div>
+
+<!-- ========== P9: 美術館温湿度管理 ========== -->
+<div id="p9" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🌡️</span>
+    <div><h2>美術館 温湿度管理</h2><p>展示エリアの温度・湿度を定期記録</p></div>
+  </div>
+  <div class="card">
+    <h3>温湿度記録入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>場所・エリア</label><input type="text" id="p9-loc" placeholder="例：第1展示室"></div>
+      <div class="form-row"><label>記録者</label><input type="text" id="p9-staff" placeholder="氏名"></div>
+      <div class="form-row"><label>温度（℃）</label><input type="number" step="0.1" id="p9-temp" placeholder="例：22.0"></div>
+      <div class="form-row"><label>湿度（%）</label><input type="number" step="0.1" id="p9-humi" placeholder="例：55.0"></div>
+      <div class="form-row"><label>判定</label><select id="p9-judge"><option value="正常">✅ 正常範囲</option><option value="警告">⚠️ 注意</option><option value="異常">🚨 異常</option></select></div>
+      <div class="form-row"><label>備考</label><input type="text" id="p9-note" placeholder="調整対応など"></div>
+    </div>
+    <button class="btn btn-primary" onclick="save('museum_env',['p9-loc','p9-staff','p9-temp','p9-humi','p9-judge','p9-note'],renderMuseumEnv)">記録する</button>
+  </div>
+  <div id="p9-recent-display"></div>
+  <div class="record-list" id="museum_env-list"></div>
+</div>
+
+<!-- ========== P10: 展示品状態管理 ========== -->
+<div id="p10" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🖼️</span>
+    <div><h2>展示品状態管理</h2><p>展示作品・美術品の状態確認と記録</p></div>
+  </div>
+  <div class="card">
+    <h3>展示品状態入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>作品名・展示品名</label><input type="text" id="p10-name" placeholder="例：山水画・掛軸"></div>
+      <div class="form-row"><label>展示場所</label><input type="text" id="p10-loc" placeholder="例：第2展示室 正面"></div>
+      <div class="form-row"><label>状態</label><select id="p10-status"><option value="良好">✅ 良好</option><option value="要注意">⚠️ 要注意</option><option value="損傷あり">❌ 損傷あり</option><option value="撤去済">📦 撤去済</option></select></div>
+      <div class="form-row"><label>点検者</label><input type="text" id="p10-staff" placeholder="氏名"></div>
+    </div>
+    <div class="form-row"><label>状態詳細・メモ</label><textarea id="p10-note" placeholder="気になる点、傷・汚れの状況など"></textarea></div>
+    <button class="btn btn-primary" onclick="save('exhibit',['p10-name','p10-loc','p10-status','p10-staff','p10-note'],renderExhibit)">記録する</button>
+  </div>
+  <div class="record-list" id="exhibit-list"></div>
+</div>
+
+<!-- ========== P11: 植物管理 ========== -->
+<div id="p11" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🌿</span>
+    <div><h2>植物管理</h2><p>館内植物の水やり・状態管理</p></div>
+  </div>
+  <div class="card">
+    <h3>植物ケア記録</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>植物名・場所</label><input type="text" id="p11-name" placeholder="例：エントランス ポトス"></div>
+      <div class="form-row"><label>担当者</label><input type="text" id="p11-staff" placeholder="氏名"></div>
+      <div class="form-row"><label>作業内容</label><select id="p11-action"><option>水やり</option><option>施肥</option><option>剪定</option><option>植え替え</option><option>状態確認のみ</option></select></div>
+      <div class="form-row"><label>状態</label><select id="p11-status"><option value="良好">✅ 良好</option><option value="要注意">⚠️ 要注意</option><option value="枯れ気味">🟡 枯れ気味</option><option value="交換必要">❌ 交換必要</option></select></div>
+    </div>
+    <div class="form-row"><label>メモ</label><input type="text" id="p11-note" placeholder="様子・特記事項"></div>
+    <button class="btn btn-primary" onclick="save('plants',['p11-name','p11-staff','p11-action','p11-status','p11-note'],renderPlants)">記録する</button>
+  </div>
+  <div class="record-list" id="plants-list"></div>
+</div>
+
+<!-- ========== P12: 顧客接遇登録 ========== -->
+<div id="p12" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🤝</span>
+    <div><h2>顧客接遇登録</h2><p>お客様への対応・接遇記録</p></div>
+  </div>
+  <div class="card">
+    <h3>接遇記録入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>客室番号 / お客様名</label><input type="text" id="p12-guest" placeholder="例：302 / 山田様"></div>
+      <div class="form-row"><label>対応スタッフ</label><input type="text" id="p12-staff" placeholder="氏名"></div>
+      <div class="form-row"><label>接遇種別</label><select id="p12-type"><option>チェックイン対応</option><option>チェックアウト対応</option><option>リクエスト対応</option><option>トラブル対応</option><option>特別接遇</option><option>その他</option></select></div>
+      <div class="form-row"><label>対応結果</label><select id="p12-result"><option value="完了">✅ 完了・満足</option><option value="継続">🔄 継続対応中</option><option value="要フォロー">⚠️ 要フォロー</option></select></div>
+    </div>
+    <div class="form-row"><label>対応内容詳細</label><textarea id="p12-detail" placeholder="お客様の要望・対応内容を記入"></textarea></div>
+    <button class="btn btn-primary" onclick="save('guest_service',['p12-guest','p12-staff','p12-type','p12-result','p12-detail'],renderGuestService)">登録する</button>
+  </div>
+  <div class="record-list" id="guest_service-list"></div>
+</div>
+
+<!-- ========== P13: 無料接遇・割引承認申請 ========== -->
+<div id="p13" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🎁</span>
+    <div><h2>無料接遇・割引承認申請</h2><p>コンプリメンタリーや割引の上長承認申請</p></div>
+  </div>
+  <div class="card">
+    <h3>承認申請入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>対象客室 / お客様名</label><input type="text" id="p13-guest" placeholder="例：501 / 田中様"></div>
+      <div class="form-row"><label>申請者</label><input type="text" id="p13-applicant" placeholder="氏名"></div>
+      <div class="form-row"><label>接遇種別</label><select id="p13-type"><option>無料サービス（料飲）</option><option>無料アップグレード</option><option>割引適用</option><option>特典提供</option><option>その他コンプリメンタリー</option></select></div>
+      <div class="form-row"><label>金額・内容</label><input type="text" id="p13-amount" placeholder="例：ウェルカムドリンク 2,000円相当"></div>
+      <div class="form-row"><label>承認状態</label><select id="p13-status"><option value="申請中">📋 申請中</option><option value="承認済">✅ 承認済</option><option value="却下">❌ 却下</option></select></div>
+      <div class="form-row"><label>承認者（上長記入）</label><input type="text" id="p13-approver" placeholder="承認した上長名"></div>
+    </div>
+    <div class="form-row"><label>申請理由</label><textarea id="p13-reason" placeholder="無料接遇・割引の理由を具体的に記入"></textarea></div>
+    <button class="btn btn-primary" onclick="save('complimentary',['p13-guest','p13-applicant','p13-type','p13-amount','p13-status','p13-approver','p13-reason'],renderComplimentary)">申請・保存</button>
+  </div>
+  <div class="record-list" id="complimentary-list"></div>
+</div>
+
+<!-- ========== P14: 台風防災点検 ========== -->
+<div id="p14" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🌀</span>
+    <div><h2>台風防災点検</h2><p>台風接近時の施設安全確認チェックリスト</p></div>
+  </div>
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-row"><label>点検日時</label><input type="datetime-local" id="p14-datetime"></div>
+      <div class="form-row"><label>点検者</label><input type="text" id="p14-inspector" placeholder="氏名"></div>
+      <div class="form-row"><label>台風情報</label><input type="text" id="p14-typhoon" placeholder="例：台風12号 最接近22時頃"></div>
+      <div class="form-row"><label>警戒レベル</label><select id="p14-level"><option>注意（準備段階）</option><option>警戒（対応開始）</option><option>厳重警戒（最大警戒）</option></select></div>
+    </div>
+    <div id="p14-checklist"></div>
+    <div class="form-row" style="margin-top:12px"><label>特記事項</label><textarea id="p14-note" placeholder="施設の状況・対応内容"></textarea></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="saveChecklist('typhoon','p14')">点検完了・保存</button>
+  </div>
+  <div class="record-list" id="typhoon-list"></div>
+</div>
+
+<!-- ========== P15: 事故・苦情・異常報告 ========== -->
+<div id="p15" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🚨</span>
+    <div><h2>事故・苦情・異常報告</h2><p>インシデント・クレームの記録と対応管理</p></div>
+  </div>
+  <div class="card">
+    <h3>報告入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>報告種別</label><select id="p15-type"><option value="事故">🚑 事故</option><option value="苦情">😤 苦情・クレーム</option><option value="異常">⚠️ 施設異常</option><option value="ヒヤリハット">🔶 ヒヤリハット</option><option value="盗難・紛失">🔍 盗難・紛失</option></select></div>
+      <div class="form-row"><label>発生場所</label><input type="text" id="p15-loc" placeholder="例：駐車場 / 205号室"></div>
+      <div class="form-row"><label>発生日時</label><input type="datetime-local" id="p15-datetime"></div>
+      <div class="form-row"><label>報告者</label><input type="text" id="p15-reporter" placeholder="氏名"></div>
+      <div class="form-row"><label>対応状況</label><select id="p15-status"><option value="報告のみ">📋 報告のみ</option><option value="対応中">🔄 対応中</option><option value="完了">✅ 完了</option><option value="警察・消防対応">🚔 警察・消防対応</option></select></div>
+      <div class="form-row"><label>重要度</label><select id="p15-severity"><option value="低">低</option><option value="中">中</option><option value="高">高</option><option value="重大">重大</option></select></div>
+    </div>
+    <div class="form-row"><label>状況詳細（5W1H）</label><textarea id="p15-detail" placeholder="いつ・どこで・誰が・何を・なぜ・どのように"></textarea></div>
+    <div class="form-row"><label>初期対応・措置内容</label><textarea id="p15-action" placeholder="実施した対応内容"></textarea></div>
+    <button class="btn btn-primary" onclick="save('incident',['p15-type','p15-loc','p15-datetime','p15-reporter','p15-status','p15-severity','p15-detail','p15-action'],renderIncident)">報告する</button>
+  </div>
+  <div class="record-list" id="incident-list"></div>
+</div>
+
+<!-- ========== P16: 購入・立替精算 ========== -->
+<div id="p16" class="page">
+  <div class="page-header">
+    <span class="ph-icon">💴</span>
+    <div><h2>購入・立替精算</h2><p>備品購入・立替費用の申請と精算管理</p></div>
+  </div>
+  <div class="card">
+    <h3>精算申請入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>購入品目</label><input type="text" id="p16-item" placeholder="例：掃除用洗剤 3本"></div>
+      <div class="form-row"><label>金額（円）</label><input type="number" id="p16-amount" placeholder="例：3850"></div>
+      <div class="form-row"><label>購入日</label><input type="date" id="p16-date"></div>
+      <div class="form-row"><label>購入者</label><input type="text" id="p16-buyer" placeholder="氏名"></div>
+      <div class="form-row"><label>購入場所</label><input type="text" id="p16-store" placeholder="例：コメリ 那覇店"></div>
+      <div class="form-row"><label>精算状態</label><select id="p16-status"><option value="申請中">📋 申請中</option><option value="承認済">✅ 承認済</option><option value="精算済">💰 精算済</option></select></div>
+    </div>
+    <div class="form-row"><label>購入理由・備考</label><textarea id="p16-reason" placeholder="何のために購入したか記入"></textarea></div>
+    <button class="btn btn-primary" onclick="save('expense',['p16-item','p16-amount','p16-date','p16-buyer','p16-store','p16-status','p16-reason'],renderExpense)">申請する</button>
+  </div>
+  <div id="p16-total" style="margin-bottom:8px"></div>
+  <div class="record-list" id="expense-list"></div>
+</div>
+
+<!-- ========== P17: 鍵管理 ========== -->
+<div id="p17" class="page">
+  <div class="page-header">
+    <span class="ph-icon">🗝️</span>
+    <div><h2>鍵管理</h2><p>鍵の貸出・返却のトラッキング</p></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('p17','checkout')">貸出記録</button>
+    <button class="tab-btn" onclick="switchTab('p17','status')">鍵一覧</button>
+  </div>
+  <div id="p17-checkout">
+    <div class="card">
+      <h3>鍵の貸出・返却記録</h3>
+      <div class="form-grid">
+        <div class="form-row"><label>鍵ID・名称</label><input type="text" id="p17-key" placeholder="例：マスターキー / 201号室鍵"></div>
+        <div class="form-row"><label>借用者</label><input type="text" id="p17-borrower" placeholder="氏名"></div>
+        <div class="form-row"><label>目的</label><input type="text" id="p17-purpose" placeholder="例：清掃のため"></div>
+        <div class="form-row"><label>状態</label><select id="p17-action"><option value="貸出">🔑 貸出</option><option value="返却">✅ 返却</option></select></div>
+      </div>
+      <button class="btn btn-primary" onclick="save('keys',['p17-key','p17-borrower','p17-purpose','p17-action'],renderKeys)">記録する</button>
+    </div>
+    <div class="record-list" id="keys-list"></div>
+  </div>
+  <div id="p17-status" style="display:none">
+    <div class="card">
+      <h3>現在の貸出中一覧</h3>
+      <div id="p17-current-keys"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== P18: 日報作成 ========== -->
+<div id="p18" class="page">
+  <div class="page-header">
+    <span class="ph-icon">📝</span>
+    <div><h2>日報作成</h2><p>その日の業務まとめレポート</p></div>
+  </div>
+  <div class="card">
+    <h3>日報入力</h3>
+    <div class="form-grid">
+      <div class="form-row"><label>日報日付</label><input type="date" id="p18-date"></div>
+      <div class="form-row"><label>作成者</label><input type="text" id="p18-author" placeholder="氏名"></div>
+      <div class="form-row"><label>天気</label><select id="p18-weather"><option>☀️ 晴れ</option><option>⛅ 曇り</option><option>🌧️ 雨</option><option>🌀 台風</option></select></div>
+      <div class="form-row"><label>宿泊者数</label><input type="number" id="p18-guests" placeholder="0"></div>
+    </div>
+    <div class="form-row"><label>本日の主な業務・特記事項</label><textarea id="p18-main" placeholder="本日の主な業務内容を記入"></textarea></div>
+    <div class="form-row"><label>問題・課題</label><textarea id="p18-issues" placeholder="発生した問題や継続課題"></textarea></div>
+    <div class="form-row"><label>翌日への引き継ぎ事項</label><textarea id="p18-handover" placeholder="翌日担当者への連絡・引き継ぎ内容"></textarea></div>
+    <div class="form-row"><label>総合評価</label><select id="p18-eval"><option value="良好">⭐⭐⭐ 良好</option><option value="普通">⭐⭐ 普通</option><option value="要改善">⭐ 要改善</option></select></div>
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="save('daily_report',['p18-date','p18-author','p18-weather','p18-guests','p18-main','p18-issues','p18-handover','p18-eval'],renderDailyReport)">日報を保存</button>
+      <button class="btn btn-gold" onclick="autoFillReport()">📊 本日データを自動集計</button>
+    </div>
+  </div>
+  <div id="p18-auto-summary"></div>
+  <div class="record-list" id="daily_report-list"></div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ===== CORE =====
+const today = new Date();
+const todayStr = today.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+const todayISO = today.toISOString().slice(0,10);
+document.getElementById('header-date').textContent = todayStr;
+document.getElementById('dash-subtitle').textContent = todayStr + ' の状況';
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const chips = document.querySelectorAll('.nav-chip');
+  const pages = ['dashboard','p1','p2','p3','p4','p5','p6','p7','p8','p9','p10','p11','p12','p13','p14','p15','p16','p17','p18'];
+  const idx = pages.indexOf(id);
+  if(idx > 0 && chips[idx-1]) chips[idx-1].classList.add('active');
+  window.scrollTo(0,0);
+  if(id === 'dashboard') renderDashboard();
+  if(id === 'p17') renderCurrentKeys();
+}
+
+function ts() { return new Date().toLocaleString('ja-JP'); }
+function shortTs() { return new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDateTime(dt) { return dt ? new Date(dt).toLocaleString('ja-JP') : '—'; }
+
+function load(key) { try { return JSON.parse(localStorage.getItem('tenkai_'+key) || '[]'); } catch(e) { return []; } }
+function store(key, data) { localStorage.setItem('tenkai_'+key, JSON.stringify(data)); }
+
+function save(key, fields, renderFn) {
+  const rec = { id: Date.now(), ts: ts() };
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if(!el) return;
+    const fkey = f.replace(/^[a-z0-9]+-/,'').replace(/-/g,'_');
+    rec[fkey] = el.value;
+    if(el.hasAttribute('required') && !el.value) valid = false;
+  });
+  if(!valid) { alert('必須項目を入力してください'); return; }
+  const arr = load(key);
+  arr.unshift(rec);
+  store(key, arr);
+  // clear fields
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if(!el) return;
+    if(el.tagName === 'SELECT') { /* keep */ }
+    else el.value = '';
+  });
+  if(renderFn) renderFn();
+  renderDashboard();
+}
+
+function getStatusBadge(val) {
+  const map = {
+    '緊急':'badge-red','高':'badge-red','重大':'badge-red','NG':'badge-red','損傷あり':'badge-red','異常':'badge-red','却下':'badge-red','不合格':'badge-red','枯れ気味':'badge-orange','要注意':'badge-orange','警告':'badge-orange','中':'badge-orange','要対応':'badge-orange','再修理':'badge-orange','申請中':'badge-blue','対応中':'badge-blue','貸出':'badge-orange','承認済':'badge-green','合格':'badge-green','完了':'badge-green','正常':'badge-green','良好':'badge-green','OK':'badge-green','返却':'badge-green','精算済':'badge-green','低':'badge-gray','通常':'badge-gray'
+  };
+  return map[val] || 'badge-gray';
+}
+
+// ===== CHECKLIST DATA =====
+const CHECKLISTS = {
+  pre_open: [
+    '正面玄関・駐車場の清掃・安全確認','ロビー・フロント整備','各照明・BGM起動確認','冷暖房設定確認','トイレ・洗面所清潔確認','エレベーター動作確認','非常口・消火器確認','館内サイン・POPの確認','スタッフ全員の出勤確認','レジ・POSシステム起動確認','本日の予約・業務内容確認'
+  ],
+  close: [
+    '全客室チェックアウト完了確認','ロビー・共用部の最終清掃','全照明消灯確認（非常灯除く）','冷暖房停止または夜間設定','厨房ガス・火気の消火確認','窓・非常口の施錠確認','金庫・レジ締め確認','翌日準備・引き継ぎ事項確認','警備システム起動確認','最終退出者の確認・記録'
+  ],
+  kitchen_hygiene: [
+    '調理器具の洗浄・消毒','冷蔵・冷凍庫の温度確認','食材の賞味期限確認','床・排水口の清掃','手洗い場の衛生確認','ゴミの処理・分別確認','調理台の清拭・消毒','ネズミ・害虫の痕跡確認'
+  ],
+  typhoon: [
+    '屋外備品・鉢植えの収納','看板・テント等の固定または撤去','窓・シャッターの施錠強化確認','非常用電源・懐中電灯の確認','飲料水・非常食の備蓄確認','排水溝・側溝の清掃確認','ゲストへの台風情報案内','スタッフの緊急連絡網確認','避難経路・避難場所の確認','ガスメーター・電気ブレーカーの位置確認','重要書類・データのバックアップ確認'
+  ]
+};
+
+function buildChecklist(containerId, type) {
+  const items = CHECKLISTS[type] || [];
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  container.innerHTML = items.map((item, i) => `
+    <div class="checklist-item">
+      <input type="checkbox" id="cl_${type}_${i}" onchange="updateClLabel(this)">
+      <label id="cll_${type}_${i}" for="cl_${type}_${i}">${item}</label>
+      <div class="cl-note"><input type="text" placeholder="メモ" id="clnote_${type}_${i}"></div>
+    </div>
+  `).join('');
+}
+
+function updateClLabel(cb) {
+  const lbl = document.getElementById(cb.id.replace('cl_','cll_'));
+  if(lbl) lbl.className = cb.checked ? 'checked' : '';
+}
+
+function saveChecklist(type, prefix) {
+  const items = CHECKLISTS[type] || [];
+  const checked = items.filter((_,i) => {
+    const cb = document.getElementById(`cl_${type}_${i}`);
+    return cb && cb.checked;
+  });
+  const notes = items.map((_,i) => {
+    const n = document.getElementById(`clnote_${type}_${i}`);
+    return n ? n.value : '';
+  });
+  const dateEl = document.getElementById(prefix+'-date') || document.getElementById(prefix+'-datetime');
+  const inspEl = document.getElementById(prefix+'-inspector');
+  const noteEl = document.getElementById(prefix+'-note');
+  const typhoonEl = document.getElementById(prefix+'-typhoon');
+  const levelEl = document.getElementById(prefix+'-level');
+  const dateStaff2El = document.getElementById(prefix+'-hygiene-date');
+  const staff2El = document.getElementById(prefix+'-hygiene-staff');
+  const note2El = document.getElementById(prefix+'-hygiene-note');
+
+  const rec = {
+    id: Date.now(), ts: ts(),
+    date: (dateEl||{}).value || todayISO,
+    inspector: (inspEl||staff2El||{}).value || '—',
+    note: (noteEl||note2El||{}).value || '',
+    checkedCount: checked.length,
+    total: items.length,
+    items: items.map((item,i) => ({ item, checked: !!(document.getElementById(`cl_${type}_${i}`)||{}).checked, note: notes[i] }))
+  };
+  if(typhoonEl) rec.typhoon = typhoonEl.value;
+  if(levelEl) rec.level = levelEl.value;
+
+  const arr = load(type);
+  arr.unshift(rec);
+  store(type, arr);
+
+  // Reset
+  items.forEach((_,i) => {
+    const cb = document.getElementById(`cl_${type}_${i}`);
+    const nb = document.getElementById(`clnote_${type}_${i}`);
+    if(cb) { cb.checked = false; updateClLabel(cb); }
+    if(nb) nb.value = '';
+  });
+  if(inspEl) inspEl.value = '';
+  if(noteEl) noteEl.value = '';
+  if(staff2El) staff2El.value = '';
+  if(note2El) note2El.value = '';
+
+  renderChecklistList(type);
+  renderDashboard();
+  alert(`✅ ${rec.checkedCount}/${rec.total} 項目完了で保存しました`);
+}
+
+function renderChecklistList(type) {
+  const listId = type+'-list';
+  const el = document.getElementById(listId);
+  if(!el) return;
+  const arr = load(type);
+  if(!arr.length) { el.innerHTML = '<div class="empty">記録がありません</div>'; return; }
+  el.innerHTML = '<h3>記録履歴</h3>' + arr.slice(0,15).map(r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.date} 点検 — ${r.inspector}</div>
+        <div class="rec-sub">✅ ${r.checkedCount}/${r.total} 項目完了${r.note ? ' | '+r.note : ''}${r.level ? ' | '+r.level : ''}</div>
+      </div>
+      <span class="rec-badge ${r.checkedCount===r.total?'badge-green':'badge-orange'}">${r.checkedCount===r.total?'全完了':'未完了あり'}</span>
+    </div>
+  `).join('');
+}
+
+// ===== RENDER FUNCTIONS =====
+function renderList(key, mapFn) {
+  const el = document.getElementById(key+'-list');
+  if(!el) return;
+  const arr = load(key);
+  if(!arr.length) { el.innerHTML = '<div class="empty">記録がありません</div>'; return; }
+  el.innerHTML = '<h3>記録履歴</h3>' + arr.slice(0,20).map(mapFn).join('');
+}
+
+function renderInstructions() {
+  renderList('instructions', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.title||'—'}</div>
+        <div class="rec-sub">${r.body||''} | 担当：${r.staff||'—'} | 登録：${r.author||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.priority)}">${r.priority||'通常'}</span>
+    </div>
+  `);
+}
+
+function renderRoomInspect() {
+  renderList('room_inspect', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.room||'?'}号室 — ${r.inspector||'—'}</div>
+        <div class="rec-sub">ベッド:${r.bed} | バス:${r.bath} | 清潔:${r.clean}${r.note?' | '+r.note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.result)}">${r.result||'—'}</span>
+    </div>
+  `);
+}
+
+function renderCleaning() {
+  renderList('cleaning', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.loc||'—'} — ${r.type||''}</div>
+        <div class="rec-sub">担当：${r.staff||'—'}${r.note?' | '+r.note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.status)}">${r.status||'—'}</span>
+    </div>
+  `);
+}
+
+function renderEquipment() {
+  renderList('equipment', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.equip||'—'}</div>
+        <div class="rec-sub">${r.detail||''} | 報告：${r.reporter||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.severity)}">${r.severity||'—'}</span>
+    </div>
+  `);
+}
+
+function renderRepair() {
+  renderList('repair', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.target||'—'}</div>
+        <div class="rec-sub">${r.detail||''} | 申請：${r.applicant||'—'} | 希望日：${r.wish_date||'—'}${r.cost?' | 概算¥'+Number(r.cost).toLocaleString():''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.urgency)}">${r.urgency||'—'}</span>
+    </div>
+  `);
+}
+
+function renderAcceptance() {
+  renderList('acceptance', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.ref||'—'} — ${r.vendor||'—'}</div>
+        <div class="rec-sub">完了日：${r.done||'—'} | 実費：¥${Number(r.actual_cost||0).toLocaleString()} | 検収：${r.inspector||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.result)}">${r.result||'—'}</span>
+    </div>
+  `);
+}
+
+function renderKitchenTemp() {
+  renderList('kitchen_temp', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.device||'—'} : ${r.temp_val||'—'}℃</div>
+        <div class="rec-sub">記録者：${r.temp_staff||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.temp_judge)}">${r.temp_judge||'—'}</span>
+    </div>
+  `);
+}
+
+function renderKitchenStock() {
+  renderList('kitchen_stock', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.item||'—'} — ${r.qty||'—'}</div>
+        <div class="rec-sub">担当：${r.stock_staff||'—'}${r.stock_note?' | '+r.stock_note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.stock_type)}">${r.stock_type||'—'}</span>
+    </div>
+  `);
+}
+
+function renderMuseumEnv() {
+  renderList('museum_env', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.loc||'—'} — 🌡️${r.temp||'—'}℃ 💧${r.humi||'—'}%</div>
+        <div class="rec-sub">記録：${r.staff||'—'}${r.note?' | '+r.note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.judge)}">${r.judge||'—'}</span>
+    </div>
+  `);
+  // show recent summary
+  const arr = load('museum_env').slice(0,6);
+  const el = document.getElementById('p9-recent-display');
+  if(!el || !arr.length) return;
+  el.innerHTML = `<div class="card"><h3>最新記録</h3>${arr.map(r=>`
+    <div class="gauge-row">
+      <span class="gauge-label">${r.loc||'—'}</span>
+      <span class="gauge-val">${r.temp||'—'}℃</span>
+      <div class="gauge-bar"><div class="gauge-fill" style="width:${Math.min(100,((r.temp||20)/40)*100)}%;background:${r.judge==='正常'?'#16a34a':r.judge==='警告'?'#ea580c':'#dc2626'}"></div></div>
+      <span style="font-size:0.75rem;min-width:40px">${r.humi||'—'}%</span>
+      <span class="rec-badge ${getStatusBadge(r.judge)}" style="margin-left:4px">${r.judge}</span>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderExhibit() {
+  renderList('exhibit', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.name||'—'} [${r.loc||'—'}]</div>
+        <div class="rec-sub">点検：${r.staff||'—'}${r.note?' | '+r.note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.status)}">${r.status||'—'}</span>
+    </div>
+  `);
+}
+
+function renderPlants() {
+  renderList('plants', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.name||'—'} — ${r.action||'—'}</div>
+        <div class="rec-sub">担当：${r.staff||'—'}${r.note?' | '+r.note:''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.status)}">${r.status||'—'}</span>
+    </div>
+  `);
+}
+
+function renderGuestService() {
+  renderList('guest_service', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.guest||'—'} — ${r.type||'—'}</div>
+        <div class="rec-sub">対応：${r.staff||'—'} | ${r.detail||''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.result)}">${r.result||'—'}</span>
+    </div>
+  `);
+}
+
+function renderComplimentary() {
+  renderList('complimentary', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.guest||'—'} — ${r.type||'—'}</div>
+        <div class="rec-sub">${r.amount||''} | 申請：${r.applicant||'—'} | 承認：${r.approver||'未'} | ${r.reason||''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.status)}">${r.status||'—'}</span>
+    </div>
+  `);
+}
+
+function renderIncident() {
+  renderList('incident', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.type||'—'} — ${r.loc||'—'}</div>
+        <div class="rec-sub">${r.detail||''} | 報告：${r.reporter||'—'} | 対応：${r.action||''}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.severity)}">${r.severity||'—'}</span>
+    </div>
+  `);
+}
+
+function renderExpense() {
+  const arr = load('expense');
+  const pending = arr.filter(r=>r.status==='申請中').reduce((s,r)=>s+Number(r.amount||0),0);
+  const el = document.getElementById('p16-total');
+  if(el) el.innerHTML = `<div class="card" style="padding:10px 14px;display:flex;gap:20px;align-items:center"><span style="font-size:0.8rem;color:var(--gray)">申請中合計</span><span style="font-size:1.3rem;font-weight:700;color:var(--navy)">¥${pending.toLocaleString()}</span></div>`;
+  renderList('expense', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.item||'—'} — ¥${Number(r.amount||0).toLocaleString()}</div>
+        <div class="rec-sub">${r.date||'—'} | ${r.store||'—'} | 購入：${r.buyer||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.status)}">${r.status||'—'}</span>
+    </div>
+  `);
+}
+
+function renderKeys() {
+  renderList('keys', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.ts.slice(5,16)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.key||'—'} — ${r.borrower||'—'}</div>
+        <div class="rec-sub">目的：${r.purpose||'—'}</div>
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.action)}">${r.action||'—'}</span>
+    </div>
+  `);
+  renderCurrentKeys();
+}
+
+function renderCurrentKeys() {
+  const el = document.getElementById('p17-current-keys');
+  if(!el) return;
+  const arr = load('keys');
+  // build current status per key
+  const keyMap = {};
+  [...arr].reverse().forEach(r => {
+    if(!keyMap[r.key]) keyMap[r.key] = r;
+    else if(r.ts > keyMap[r.key].ts) keyMap[r.key] = r;
+  });
+  const out = Object.values(keyMap).sort((a,b)=>a.key>b.key?1:-1);
+  if(!out.length) { el.innerHTML = '<div class="empty">記録がありません</div>'; return; }
+  el.innerHTML = `<table class="key-table"><thead><tr><th>鍵名</th><th>状態</th><th>借用者</th><th>最終記録</th></tr></thead><tbody>${
+    out.map(r=>`<tr><td>${r.key||'—'}</td><td><span class="rec-badge ${getStatusBadge(r.action)}">${r.action||'—'}</span></td><td>${r.action==='貸出'?r.borrower:'—'}</td><td>${r.ts.slice(5,16)}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderDailyReport() {
+  renderList('daily_report', r => `
+    <div class="record-item">
+      <div class="rec-time">${r.date||r.ts.slice(0,10)}</div>
+      <div class="rec-body">
+        <div class="rec-title">${r.weather||''} 宿泊${r.guests||0}名 — ${r.author||'—'}</div>
+        <div class="rec-sub">${r.main||''}</div>
+        ${r.handover ? `<div class="rec-sub" style="color:var(--blue)">引継：${r.handover}</div>` : ''}
+      </div>
+      <span class="rec-badge ${getStatusBadge(r.eval)}">${r.eval||'—'}</span>
+    </div>
+  `);
+}
+
+function autoFillReport() {
+  const t = today;
+  document.getElementById('p18-date').value = todayISO;
+  const todayRecs = k => load(k).filter(r => r.ts && r.ts.startsWith(t.toLocaleDateString('ja-JP').slice(0,10)));
+  const incidents = load('incident').filter(r=>r.ts.includes(t.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).slice(0,10)));
+  const equipment = load('equipment').filter(r=>r.status==='未対応'||r.status==='対応中');
+  const keys_out = load('keys').filter(r=>r.action==='貸出');
+
+  let summary = '';
+  const sections = [
+    ['instructions','📋 運営指示',r=>r.title],
+    ['cleaning','🧹 清掃',r=>`${r.loc} [${r.status}]`],
+    ['guest_service','🤝 顧客接遇',r=>`${r.guest} ${r.type}`],
+    ['expense','💴 購入精算',r=>`${r.item} ¥${Number(r.amount||0).toLocaleString()}`],
+  ];
+  sections.forEach(([key,label,fn])=>{
+    const arr = load(key).filter(r=>r.ts && r.ts.slice(0,4)===String(t.getFullYear()));
+    if(arr.length) summary += label+': '+arr.slice(0,3).map(fn).join('、')+'\n';
+  });
+  document.getElementById('p18-main').value = summary || '（自動集計データなし）';
+
+  let issues = '';
+  if(equipment.length) issues += `⚠️ 未対応設備異常 ${equipment.length}件\n`;
+  const incidents2 = load('incident').filter(r=>r.severity==='高'||r.severity==='重大');
+  if(incidents2.length) issues += `🚨 重要インシデント ${incidents2.length}件\n`;
+  document.getElementById('p18-issues').value = issues || 'なし';
+
+  if(keys_out.length) {
+    document.getElementById('p18-handover').value = `🗝️ 鍵貸出中：${keys_out.map(r=>r.key+'('+r.borrower+')').join('、')}`;
+  }
+
+  const el = document.getElementById('p18-auto-summary');
+  el.innerHTML = `<div class="card" style="border-left:4px solid var(--gold)"><p style="font-size:0.8rem;color:var(--green);font-weight:700">✅ 本日データを自動集計しました。内容を確認の上、日報を保存してください。</p></div>`;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const counts = {
+    '未対応設備': load('equipment').filter(r=>r.status==='未対応').length,
+    '申請中精算': load('expense').filter(r=>r.status==='申請中').length,
+    '貸出中の鍵': load('keys').filter((r,i,a)=>{
+      const latest = [...a].reverse().find(x=>x.key===r.key);
+      return latest && latest.action==='貸出' && r===latest;
+    }).length,
+    '重要インシデント': load('incident').filter(r=>r.severity==='高'||r.severity==='重大').length,
+    '承認待ち接遇': load('complimentary').filter(r=>r.status==='申請中').length,
+    '要注意展示品': load('exhibit').filter(r=>r.status==='要注意'||r.status==='損傷あり').length,
+  };
+  const labels = Object.keys(counts);
+  const colors = ['#dc2626','#2563eb','#ea580c','#dc2626','#2563eb','#ea580c'];
+  document.getElementById('dash-summary').innerHTML = labels.map((l,i)=>`
+    <div class="summary-box">
+      <div class="s-num" style="color:${counts[l]>0?colors[i]:'#16a34a'}">${counts[l]}</div>
+      <div class="s-label">${l}</div>
+    </div>
+  `).join('');
+}
+
+// ===== TABS =====
+function switchTab(pageId, tabId) {
+  const page = document.getElementById(pageId);
+  page.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(tabId) || b.onclick.toString().includes(tabId));
+  });
+  // show/hide panels
+  if(pageId==='p7') {
+    document.getElementById('p7-apply').style.display = tabId==='apply'?'block':'none';
+    document.getElementById('p7-accept').style.display = tabId==='accept'?'block':'none';
+  }
+  if(pageId==='p8') {
+    ['temp','hygiene','stock'].forEach(t=>{
+      const el=document.getElementById('p8-'+t);
+      if(el) el.style.display=t===tabId?'block':'none';
+    });
+  }
+  if(pageId==='p17') {
+    document.getElementById('p17-checkout').style.display = tabId==='checkout'?'block':'none';
+    document.getElementById('p17-status').style.display = tabId==='status'?'block':'none';
+    if(tabId==='status') renderCurrentKeys();
+  }
+}
+
+// ===== INIT =====
+function init() {
+  // set today dates
+  document.querySelectorAll('input[type=date]').forEach(el => { if(!el.value) el.value = todayISO; });
+  document.querySelectorAll('input[type=datetime-local]').forEach(el => {
+    if(!el.value) el.value = today.toISOString().slice(0,16);
+  });
+  // build checklists
+  buildChecklist('p2-checklist','pre_open');
+  buildChecklist('p3-checklist','close');
+  buildChecklist('p8-checklist','kitchen_hygiene');
+  buildChecklist('p14-checklist','typhoon');
+  // render all
+  renderInstructions(); renderRoomInspect(); renderCleaning(); renderEquipment();
+  renderRepair(); renderAcceptance(); renderKitchenTemp(); renderKitchenStock();
+  renderMuseumEnv(); renderExhibit(); renderPlants(); renderGuestService();
+  renderComplimentary(); renderIncident(); renderExpense(); renderKeys();
+  renderDailyReport();
+  ['pre_open','close','kitchen_hygiene','typhoon'].forEach(renderChecklistList);
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>
