@@ -211,9 +211,52 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
   #header, #nav-bar { position: static; }
   .btn, #home-btn { display: none; }
 }
+
+/* ===== PASSPHRASE GATE ===== */
+#gate {
+  position: fixed; inset: 0; z-index: 9999;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+#gate-box {
+  background: var(--white); border-radius: 12px; padding: 32px 24px;
+  width: 100%; max-width: 360px; text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); border-top: 4px solid var(--gold);
+}
+#gate-box .gate-logo { font-size: 2rem; margin-bottom: 8px; }
+#gate-box h1 { font-size: 1.1rem; color: var(--navy); margin-bottom: 4px; }
+#gate-box h1 span { color: var(--gold); }
+#gate-box p { font-size: 0.78rem; color: var(--gray); margin-bottom: 20px; }
+#gate-box input {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--gray-light);
+  border-radius: 6px; font-size: 0.95rem; text-align: center; margin-bottom: 12px;
+}
+#gate-box input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,39,68,0.1); }
+#gate-box button {
+  width: 100%; padding: 11px; background: var(--navy); color: white;
+  border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+}
+#gate-box button:hover { background: var(--navy-light); }
+#gate-error { color: var(--red); font-size: 0.78rem; margin-top: 10px; min-height: 18px; }
+body.locked { overflow: hidden; }
+body.locked #app-root { display: none; }
 </style>
 </head>
-<body>
+<body class="locked">
+
+<!-- ===== PASSPHRASE GATE ===== -->
+<div id="gate">
+  <div id="gate-box">
+    <div class="gate-logo">🏯</div>
+    <h1>天海の城 <span>MVP管理システム</span></h1>
+    <p>合言葉を入力してください</p>
+    <input type="password" id="gate-input" placeholder="合言葉" autocomplete="off">
+    <button onclick="checkGate()">入室する</button>
+    <div id="gate-error"></div>
+  </div>
+</div>
+
+<div id="app-root">
 
 <div id="header">
   <div id="header-top">
@@ -730,7 +773,41 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 
 </div><!-- /main -->
 
+</div><!-- /app-root -->
+
 <script>
+// ===== PASSPHRASE GATE =====
+const PASSPHRASE = "tenkai2026";  // ← ここを好きな合言葉に変更してください
+const GATE_KEY = "tenkai_gate_ok";
+function checkGate() {
+  const val = document.getElementById('gate-input').value.trim();
+  if (val === PASSPHRASE) {
+    sessionStorage.setItem(GATE_KEY, "1");
+    unlockApp();
+  } else {
+    document.getElementById('gate-error').textContent = "合言葉が違います";
+    document.getElementById('gate-input').value = "";
+  }
+}
+function unlockApp() {
+  document.body.classList.remove('locked');
+  const gate = document.getElementById('gate');
+  if (gate) gate.style.display = 'none';
+}
+// すでに今回のセッションで入室済みなら素通り
+if (sessionStorage.getItem(GATE_KEY) === "1") {
+  unlockApp();
+} else {
+  // Enterキーでも入室できるように
+  document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('gate-input');
+    if (inp) {
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkGate(); });
+      inp.focus();
+    }
+  });
+}
+
 // ===== CORE =====
 const today = new Date();
 const todayStr = today.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
